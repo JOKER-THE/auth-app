@@ -1,45 +1,44 @@
 class User {
-	constructor(username, password) {
-		this.username = username
-		this.password = password
-	}
+  constructor(username, password) {
+    this.username = username
+    this.password = password
+  }
 }
 module.export = User
 
-const express = require('express');
-const { ApolloServer, gql } = require('apollo-server-express');
-const graphqlHTTP = require('express-graphql');
-const cors = require('cors');
+const express = require('express')
+const { graphql, buildSchema } = require('graphql')
+const graphqlHTTP = require('express-graphql')
+const cors = require('cors')
 
 const users = [
   new User('Bruce', 'Wayne'),
   new User('Alfred', 'Penniort')
-];
+]
 
-const typeDefs = gql`
+const schema = buildSchema(`
   type Query {
-    hello: String
-    getUsers: [User]
+    getUser(username: String!): User
   }
   type User {
-  	username: String
-  	password: String
+    username: String
+    password: String
   }
-`;
+`)
 
-const resolvers = {
-  Query: {
-    hello: () => 'Hello world!',
-    getUsers: () => users
-  },
-};
-
-const server = new ApolloServer({ typeDefs, resolvers });
+const rootValue = {
+  getUser: ({ username }) => {
+    return users.find(x => x.username === username)
+  }
+}
 
 const app = express();
-app.use(cors());
-server.applyMiddleware({ app });
 
-app.listen({ port: 4000 }, () =>
-  console.log('Now browse to http://localhost:4000' + server.graphqlPath)
-);
+app.use(cors())
+app.use('/graphql', graphqlHTTP({
+  rootValue, schema, graphiql: true
+}))
+
+app.listen(4000, () => 
+  console.log('Now browse to http://localhost:4000/graphql')
+)
