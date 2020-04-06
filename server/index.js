@@ -1,7 +1,9 @@
 class User {
-  constructor(username, password) {
+  constructor(id, username, password, token) {
+    this.id = id
     this.username = username
     this.password = password
+    this.token = token
   }
 }
 module.export = User
@@ -12,23 +14,32 @@ const graphqlHTTP = require('express-graphql')
 const cors = require('cors')
 
 const users = [
-  new User('Bruce', 'Wayne'),
-  new User('Alfred', 'Penniort')
+  new User('0000001', 'Bruce', 'Wayne', 'this-is-a-batman'),
+  new User('0000002', 'Alfred', 'Penniort', 'this-is-a-butler')
 ]
 
 const schema = buildSchema(`
   type Query {
-    getUser(username: String!): User
+    getUser(username: String!, password: String!): User
+    auth(token: String!): User
   }
   type User {
+    id: String
     username: String
     password: String
+    token: String
   }
 `)
 
 const rootValue = {
-  getUser: ({ username }) => {
-    return users.find(x => x.username === username)
+  getUser: ({ username, password }) => {
+    user = users.find(x => x.username === username)
+    if (user.password === password) {
+      return user
+    }
+  },
+  auth: ({ token }) => {
+    return users.find(x => x.token === token)
   }
 }
 
